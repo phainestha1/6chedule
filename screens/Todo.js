@@ -1,31 +1,39 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Alert, StyleSheet } from "react-native";
+import { Alert, useColorScheme } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import styled from "styled-components/native";
 import { Feather } from "@expo/vector-icons";
-import calender from "../time";
+import calendar from "../time";
 
 const STORAGE_KEY = "@toDos";
+const NAME_KEY = "@name";
 
 export default function Todo() {
+  // Dark Mode Verification
+  const isDark = useColorScheme() === "dark";
+
   // Variables
   let itemList = {};
   let finalList = {};
+  let getWorks;
 
   // States for setting a schedule
   const [text, setText] = useState("");
   const [done, setDone] = useState(false);
+  const [user, setUser] = useState("");
 
   // State of a schedule in progress (done = false)
   const [toDos, setToDos] = useState({});
 
+  // useEffect
   useEffect(async () => {
+    loadUserName();
     loadToDos();
-  }, []);
+  }, [done]);
 
+  // Functions
   const onChange = (payLoad) => setText(payLoad);
-
   const addTodo = async () => {
     if (text === "") {
       return;
@@ -53,32 +61,30 @@ export default function Todo() {
       if (item[i].date < new Date().toLocaleDateString()) {
         if (item[i].done === false) {
           item[i].date = new Date().toLocaleDateString();
-          console.log(item[i].date);
           itemList = { [item[i].key]: item[i] };
           Object.assign(finalList, itemList);
+          getWorks = {};
         }
       }
     }
   };
-
   const saveToDos = async (toSave) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   };
-
   const loadToDos = async () => {
     try {
-      const getWorks = JSON.parse(await AsyncStorage.getItem(STORAGE_KEY));
+      getWorks = JSON.parse(await AsyncStorage.getItem(STORAGE_KEY));
       if (getWorks) {
         const item = Object.keys(getWorks).map((key) => getWorks[key]);
         dateVerification(item);
         Object.assign(getWorks, finalList);
         setToDos(getWorks);
+        saveToDos(getWorks);
       }
     } catch (error) {
       console.log(error);
     }
   };
-
   const handleDone = async (key) => {
     const newToDos = { ...toDos };
     const item = newToDos[key];
@@ -86,19 +92,35 @@ export default function Todo() {
     setToDos(newToDos);
     await saveToDos(newToDos);
   };
+  const loadUserName = async () => {
+    const userName = await AsyncStorage.getItem(NAME_KEY);
+    setUser(userName);
+  };
 
   return (
-    <>
+    <ToDoSection>
       <InputContainer>
         <TextInput
-          style={styles.textInput}
+          style={{
+            width: "80%",
+            fontSize: 16,
+            padding: 10,
+            borderRadius: 50,
+            backgroundColor: isDark ? "#fff" : "#fafafa",
+            color: "#000",
+            textAlign: "center",
+          }}
           placeholder="일정을 입력해주세요"
+          placeholderTextColor="#373737"
           value={text}
           onChangeText={onChange}
           onSubmitEditing={addTodo}
         />
       </InputContainer>
-      <Today>{calender}</Today>
+      <UserInfoContainer>
+        <Message>안녕하세요 {user}님!</Message>
+        <Message>{calendar}</Message>
+      </UserInfoContainer>
       <TodoContainer>
         {Object.keys(toDos).map((key) => (
           <ToDoBox key={key}>
@@ -107,36 +129,29 @@ export default function Todo() {
               <Feather
                 name="check"
                 size={24}
-                color={toDos[key].done ? "red" : "black"}
+                color={toDos[key].done ? "red" : isDark ? "#aaa" : "#000"}
               />
             </Btn>
           </ToDoBox>
         ))}
       </TodoContainer>
-    </>
+    </ToDoSection>
   );
 }
 
-const styles = StyleSheet.create({
-  textInput: {
-    width: "80%",
-    fontSize: 16,
-    padding: 10,
-    backgroundColor: "white",
-    borderRadius: 50,
-  },
-});
+const ToDoSection = styled.View`
+  flex: 1;
+`;
 
 const InputContainer = styled.View`
   flex: 1;
   align-items: center;
   justify-content: center;
-  background-color: teal;
 `;
+
 const TodoContainer = styled.View`
-  flex: 10;
+  flex: 5;
   align-items: center;
-  margin-top: 20%;
 `;
 const ToDoBox = styled.View`
   flex-direction: row;
@@ -144,14 +159,19 @@ const ToDoBox = styled.View`
   align-items: center;
   width: 30%;
   height: 5%;
-  margin-bottom: 15px;
 `;
 const TodoList = styled.Text`
   font-size: 18px;
+  color: ${(props) => props.theme.textColor};
 `;
-const Today = styled.Text`
+const UserInfoContainer = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+const Message = styled.Text`
   text-align: center;
   font-size: 16px;
-  margin-top: 5%;
+  color: ${(props) => props.theme.textColor};
 `;
 const Btn = styled.TouchableOpacity``;
