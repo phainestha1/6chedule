@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Alert, useColorScheme } from "react-native";
+import { Alert, useColorScheme, StatusBar } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
-import styled from "styled-components/native";
 import { Feather } from "@expo/vector-icons";
-import calendar from "../time";
+import { Camera } from "expo-camera";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import styled from "styled-components/native";
+import time from "../time";
+import { darkTheme, lightTheme } from "../styled";
 
 const STORAGE_KEY = "@toDos";
 const NAME_KEY = "@name";
@@ -68,6 +70,7 @@ export default function Todo() {
       }
     }
   };
+
   const saveToDos = async (toSave) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   };
@@ -84,6 +87,13 @@ export default function Todo() {
     } catch (error) {
       console.log(error);
     }
+    if (Object.keys(getWorks).length !== 6) {
+      return Alert.alert(
+        `오늘은 ${
+          6 - Object.keys(getWorks).length
+        } 개의 일정을 추가할 수 있습니다. 😄`
+      );
+    }
   };
   const handleDone = async (key) => {
     const newToDos = { ...toDos };
@@ -99,6 +109,11 @@ export default function Todo() {
 
   return (
     <ToDoSection>
+      <StatusBar barStyle={"default"} />
+      <UserInfoContainer>
+        <Message>{time}</Message>
+        <Message>안녕하세요 {user}님!</Message>
+      </UserInfoContainer>
       <InputContainer>
         <TextInput
           style={{
@@ -110,21 +125,30 @@ export default function Todo() {
             color: "#000",
             textAlign: "center",
           }}
-          placeholder="일정을 입력해주세요"
+          placeholder="일정을 입력해주세요 (최대 25자)"
           placeholderTextColor="#373737"
           value={text}
           onChangeText={onChange}
           onSubmitEditing={addTodo}
+          maxLength={25}
         />
       </InputContainer>
-      <UserInfoContainer>
-        <Message>안녕하세요 {user}님!</Message>
-        <Message>{calendar}</Message>
-      </UserInfoContainer>
+
       <TodoContainer>
         {Object.keys(toDos).map((key) => (
           <ToDoBox key={key}>
-            <TodoList>{toDos[key].text}</TodoList>
+            <TodoList
+              style={{
+                color: toDos[key].done
+                  ? "#373737"
+                  : isDark
+                  ? darkTheme.textColor
+                  : lightTheme.textColor,
+                textDecorationLine: toDos[key].done ? "line-through" : null,
+              }}
+            >
+              {toDos[key].text}
+            </TodoList>
             <Btn onPress={() => handleDone(key)}>
               <Feather
                 name="check"
@@ -135,6 +159,7 @@ export default function Todo() {
           </ToDoBox>
         ))}
       </TodoContainer>
+      <BottomContainer />
     </ToDoSection>
   );
 }
@@ -150,15 +175,16 @@ const InputContainer = styled.View`
 `;
 
 const TodoContainer = styled.View`
-  flex: 5;
-  align-items: center;
+  flex: 4;
+  justify-content: center;
 `;
 const ToDoBox = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  width: 30%;
-  height: 5%;
+  width: 100%;
+  padding: 10px 70px;
+  margin-bottom: 3px;
 `;
 const TodoList = styled.Text`
   font-size: 18px;
@@ -175,3 +201,6 @@ const Message = styled.Text`
   color: ${(props) => props.theme.textColor};
 `;
 const Btn = styled.TouchableOpacity``;
+const BottomContainer = styled.View`
+  flex: 1;
+`;

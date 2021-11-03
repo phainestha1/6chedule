@@ -59,7 +59,8 @@ const Tabs = () => {
         value={name}
         onChangeText={onChange}
         onSubmitEditing={addName}
-        placeholder="이름을 입력해주세요"
+        placeholder="이름을 입력해주세요 (최대 10자)"
+        maxLength={10}
         placeholderTextColor="#aaa"
         style={{
           width: "60%",
@@ -88,16 +89,16 @@ const Tabs = () => {
         },
         tabBarActiveTintColor: isDark ? "#FBC740" : "black",
         tabBarInactiveTintColor: "#aaa",
-        headerRight: () => (
-          <TouchableOpacity onPress={() => console.log("hello")}>
-            <Feather
-              name="user"
-              size={24}
-              color={isDark ? darkTheme.tabText : lightTheme.tabText}
-              style={{ paddingRight: 12 }}
-            />
-          </TouchableOpacity>
-        ),
+        // headerRight: () => (
+        //   <TouchableOpacity onPress={() => console.log("hello")}>
+        //     <Feather
+        //       name="user"
+        //       size={24}
+        //       color={isDark ? darkTheme.tabText : lightTheme.tabText}
+        //       style={{ paddingRight: 12 }}
+        //     />
+        //   </TouchableOpacity>
+        // ),
       }}
     >
       <Tab.Screen
