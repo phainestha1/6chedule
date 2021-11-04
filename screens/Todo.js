@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Alert, useColorScheme, StatusBar } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import { Feather } from "@expo/vector-icons";
-import { Camera } from "expo-camera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styled from "styled-components/native";
 import time from "../time";
@@ -10,6 +9,7 @@ import { darkTheme, lightTheme } from "../styled";
 
 const STORAGE_KEY = "@toDos";
 const NAME_KEY = "@name";
+export let diaryList = {};
 
 export default function Todo() {
   // Dark Mode Verification
@@ -32,6 +32,7 @@ export default function Todo() {
   useEffect(async () => {
     loadUserName();
     loadToDos();
+    await diaryCreator();
   }, [done]);
 
   // Functions
@@ -70,6 +71,16 @@ export default function Todo() {
       }
     }
   };
+  const diaryCreator = async () => {
+    const getWorks = JSON.parse(await AsyncStorage.getItem(STORAGE_KEY));
+    const item = Object.keys(getWorks).map((key) => getWorks[key]);
+    for (let i = 0; i < item.length; i++) {
+      if (item[i].date <= new Date().toLocaleDateString()) {
+        itemList = { [item[i].key]: item[i] };
+        Object.assign(diaryList, itemList);
+      }
+    }
+  };
 
   const saveToDos = async (toSave) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
@@ -87,11 +98,9 @@ export default function Todo() {
     } catch (error) {
       console.log(error);
     }
-    if (Object.keys(getWorks).length !== 6) {
+    if (getWorks && Object.keys(getWorks).length !== 6) {
       return Alert.alert(
-        `오늘은 ${
-          6 - Object.keys(getWorks).length
-        } 개의 일정을 추가할 수 있습니다. 😄`
+        `${6 - Object.keys(getWorks).length}개의 일정을 추가할 수 있습니다. 😄`
       );
     }
   };
